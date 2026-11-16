@@ -1,0 +1,30 @@
+# Studious
+
+Study from your own sources. Add PDFs, Markdown, text or HTML, ask questions that cite the exact passage, then turn the material into flashcards, quizzes, mind maps, slide decks, tables, glossaries and notes — and review them with FSRS spaced repetition.
+
+Everything runs in the browser; notebooks live in IndexedDB. An optional model (Anthropic or any OpenAI-compatible endpoint, bring your own key) can write the answers and Studio items; without one, the app works offline by quoting and ranking passages from your sources.
+
+See [`docs/research-report.md`](docs/research-report.md) for the competitor research, what was verified, and what was built.
+
+## Run
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm test           # unit + integration tests (vitest, fake-indexeddb)
+npm run build      # typecheck + production build
+```
+
+## Layout
+
+| Path | What it holds |
+|---|---|
+| `src/lib/` | text/chunking, retrieval, analysis (terms, definitions), FSRS wrapper, ingestion, export |
+| `src/studio/` | offline generators for the eight modules, model-backed generation, orchestration |
+| `src/ai/` | grounded answering (offline + model), LLM client |
+| `src/components/` | UI: library, workspace panes, reader, viewers, review, progress, search |
+| `src/db.ts` | Dexie schema, backup import/export |
+
+## Grounding contract
+
+Every generated claim carries chunk citations. In model mode, claims without a valid citation are discarded; if nothing usable remains the item falls back to offline generation with a visible note. When the sources don't cover a question, chat says so instead of guessing.
