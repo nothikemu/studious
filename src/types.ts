@@ -198,7 +198,7 @@ export interface QuizAttempt {
 }
 
 export interface AiConfig {
-  provider: 'offline' | 'anthropic' | 'openai'
+  provider: 'offline' | 'anthropic' | 'nvidia' | 'openai'
   apiKey: string
   model: string
   baseUrl: string

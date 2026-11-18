@@ -18,4 +18,4 @@ export function saveAiConfig(c: AiConfig) {
     /* storage unavailable — config lives for this session only */
   }
 }
-export const isRemote = (c: AiConfig) => c.provider !== 'offline' && !!c.apiKey.trim()
+export const isRemote = (c: AiConfig) => c.provider !== 'offline' && !!c.apiKey.trim() && !!c.model.trim()

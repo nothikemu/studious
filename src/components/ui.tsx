@@ -46,6 +46,9 @@ const P: Record<string, string> = {
   clock: 'M12 7v5l3 2M4 12a8 8 0 1016 0 8 8 0 10-16 0',
   flame: 'M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z',
   warn: 'M12 4l9 16H3zM12 10v4M12 17h.01',
+  home: 'M4 11l8-7 8 7M6 10v10h12V10M10 20v-6h4v6',
+  arrow: 'M5 12h14M13 6l6 6-6 6',
+  layers: 'M12 4l9 5-9 5-9-5zM3 14l9 5 9-5',
 }
 
 export type IconName = keyof typeof P | (string & {})
@@ -58,11 +61,40 @@ export function Icon({ name, size = 18, className }: { name: IconName; size?: nu
   )
 }
 
+export function Wordmark() {
+  return (
+    <span className="wordmark">
+      <Logo size={24} />
+      <span>studious</span>
+    </span>
+  )
+}
+
+/** Original mascot: a studious owl with a book. */
+export function Mascot({ size = 104 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true" className="mascot">
+      <ellipse cx="60" cy="108" rx="30" ry="5" fill="#000" opacity=".25" />
+      <path d="M34 44c-3-14 3-24 12-28l6 9 8-3 8 3 6-9c9 4 15 14 12 28 3 20-8 44-26 44S31 64 34 44z" fill="#7c4dff" />
+      <ellipse cx="60" cy="68" rx="20" ry="24" fill="#a98bff" />
+      <path d="M46 62q14 10 28 0" stroke="#7c4dff" strokeWidth="2" fill="none" opacity=".5" />
+      <circle cx="49" cy="46" r="11" fill="#fff" /><circle cx="71" cy="46" r="11" fill="#fff" />
+      <circle cx="51" cy="47" r="5.5" fill="#1b1830" /><circle cx="69" cy="47" r="5.5" fill="#1b1830" />
+      <circle cx="53" cy="45" r="1.8" fill="#fff" /><circle cx="71" cy="45" r="1.8" fill="#fff" />
+      <path d="M56 54l4 7 4-7z" fill="#ffb347" />
+      <path d="M38 84l22-6 22 6-2 14-20-5-20 5z" fill="#ffd166" stroke="#e0a526" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M60 78v15" stroke="#e0a526" strokeWidth="1.5" />
+      <path d="M88 20l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#ffd166" />
+      <circle cx="100" cy="34" r="2.2" fill="#a98bff" />
+    </svg>
+  )
+}
+
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="var(--accent)" />
-      <path d="M21.2 11.2c-.9-1.7-2.7-2.5-5-2.5-2.6 0-4.3 1.2-4.3 3.1 0 4.4 9.6 2 9.6 6.6 0 2.1-1.9 3.5-4.8 3.5-2.4 0-4.3-.9-5.4-2.6" stroke="var(--accent-ink)" strokeWidth="2.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="32" height="32" rx="8" fill="var(--btn)" />
+      <path d="M21.2 11.2c-.9-1.7-2.7-2.5-5-2.5-2.6 0-4.3 1.2-4.3 3.1 0 4.4 9.6 2 9.6 6.6 0 2.1-1.9 3.5-4.8 3.5-2.4 0-4.3-.9-5.4-2.6" stroke="#fff" strokeWidth="2.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="24" cy="8" r="2" fill="var(--cite)" />
     </svg>
   )
@@ -83,11 +115,11 @@ export function Button({ variant = 'secondary', size = 'md', icon, busy, childre
   )
 }
 
-export function IconButton({ icon, label, shortcut, size = 18, className = '', active, ...rest }: { icon: IconName; label: string; shortcut?: string; size?: number; active?: boolean } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function IconButton({ icon, label, shortcut, size = 18, className = '', active, tipSide, ...rest }: { icon: IconName; label: string; shortcut?: string; size?: number; active?: boolean; tipSide?: 'right' } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button {...rest} aria-label={label} aria-pressed={active} className={`iconbtn ${active ? 'is-active' : ''} ${className}`}>
       <Icon name={icon} size={size} />
-      <span className="tip" role="tooltip">
+      <span className={`tip ${tipSide === 'right' ? 'tip-right' : ''}`} role="tooltip">
         {label}
         {shortcut && <kbd>{shortcut}</kbd>}
       </span>

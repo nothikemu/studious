@@ -111,7 +111,7 @@ async function remoteAnswer(inp: AnswerInput): Promise<Answer> {
     .map((m) => `${m.role === 'user' ? 'Learner' : 'Assistant'}: ${m.text ?? (m.segments ?? []).map((s) => s.text).join(' ')}`)
     .join('\n')
   const user = `Learner level: ${prefs.level}\n\nSOURCE EXCERPTS\n${ctx.text}\n\n${convo ? `CONVERSATION SO FAR\n${convo}\n\n` : ''}QUESTION\n${inp.query}`
-  const raw = (await callLLM(cfg, SYSTEM, user, 1500)).trim()
+  const raw = (await callLLM(cfg, SYSTEM, user, 4096)).trim()
   if (/^NOT_IN_SOURCES/i.test(raw)) return { notFound: true, mode: 'llm' }
   const [body, fu] = raw.split(/\n?FOLLOWUPS:/i)
   const segments = parseCited(body.trim(), ctx.byNumber)

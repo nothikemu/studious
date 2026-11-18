@@ -249,6 +249,38 @@ describe('exports', () => {
   })
 })
 
+describe('reasoning-model output and NVIDIA preset', () => {
+  const nv = { provider: 'nvidia' as const, apiKey: 'nvapi-test', model: 'some/model', baseUrl: '' }
+  const real = globalThis.fetch
+  it('strips <think> blocks, calls the NIM endpoint with a bearer key', async () => {
+    let seen: any
+    globalThis.fetch = (async (u: any, init: any) => {
+      seen = { u: String(u), h: init.headers, b: JSON.parse(init.body) }
+      return new Response(JSON.stringify({ choices: [{ message: { content: '<think>let me {think} first</think>\n{"ok":true}' } }] }), { status: 200 })
+    }) as any
+    const { callLLM, extractJson } = await import('./ai/llm')
+    const out = await callLLM(nv, 'sys', 'user', 100)
+    expect(out).toBe('{"ok":true}')
+    expect(extractJson(out)).toEqual({ ok: true })
+    expect(seen.u).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
+    expect(seen.h.authorization).toBe('Bearer nvapi-test')
+    expect(seen.b.model).toBe('some/model')
+    globalThis.fetch = real
+  })
+  it('handles an unterminated think block and explains CORS failures', async () => {
+    const { stripThinking, callLLM } = await import('./ai/llm')
+    expect(stripThinking('reasoning without opener</think>Answer [1].')).toBe('Answer [1].')
+    globalThis.fetch = (async () => { throw new TypeError('Failed to fetch') }) as any
+    await expect(callLLM(nv, 's', 'u')).rejects.toThrow(/integrate\.api\.nvidia\.com.*CORS/)
+    globalThis.fetch = real
+  })
+  it('requires a model id before treating the engine as remote', async () => {
+    const { isRemote } = await import('./ai/config')
+    expect(isRemote({ ...nv, model: '' })).toBe(false)
+    expect(isRemote(nv)).toBe(true)
+  })
+})
+
 describe('optional model path (mocked API)', () => {
   const cfg = { provider: 'anthropic' as const, apiKey: 'test-key', model: 'm', baseUrl: '' }
   const realFetch = globalThis.fetch

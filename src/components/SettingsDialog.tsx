@@ -6,10 +6,11 @@ import { useUI } from '../store'
 import type { AiConfig } from '../types'
 import { Button, Dialog } from './ui'
 
-const PRESETS: Record<AiConfig['provider'], { model: string; base: string }> = {
-  offline: { model: '', base: '' },
-  anthropic: { model: 'claude-sonnet-5-5', base: '' },
-  openai: { model: 'gpt-4.1-mini', base: '' },
+const PRESETS: Record<AiConfig['provider'], { model: string; base: string; label: string; modelHint: string }> = {
+  offline: { model: '', base: '', label: 'Offline', modelHint: '' },
+  anthropic: { model: 'claude-sonnet-5-5', base: '', label: 'Anthropic', modelHint: 'claude-sonnet-5-5' },
+  nvidia: { model: '', base: 'https://integrate.api.nvidia.com/v1', label: 'NVIDIA NIM', modelHint: 'Copy the exact model ID from build.nvidia.com (e.g. nvidia/…)' },
+  openai: { model: 'gpt-4.1-mini', base: '', label: 'OpenAI-compatible', modelHint: 'gpt-4.1-mini' },
 }
 
 export function SettingsDialog() {
@@ -59,9 +60,9 @@ export function SettingsDialog() {
         <fieldset className="field">
           <legend>AI engine</legend>
           <div className="seg">
-            {(['offline', 'anthropic', 'openai'] as const).map((p) => (
-              <button key={p} className={cfg.provider === p ? 'on' : ''} aria-pressed={cfg.provider === p} onClick={() => setCfg({ ...cfg, provider: p, model: PRESETS[p].model || cfg.model })}>
-                {p === 'offline' ? 'Offline' : p === 'anthropic' ? 'Anthropic' : 'OpenAI-compatible'}
+            {(['offline', 'nvidia', 'anthropic', 'openai'] as const).map((p) => (
+              <button key={p} className={cfg.provider === p ? 'on' : ''} aria-pressed={cfg.provider === p} onClick={() => setCfg({ ...cfg, provider: p, model: PRESETS[p].model, baseUrl: PRESETS[p].base })}>
+                {PRESETS[p].label}
               </button>
             ))}
           </div>
@@ -74,18 +75,18 @@ export function SettingsDialog() {
                 <input type="password" autoComplete="off" value={cfg.apiKey} onChange={(e) => setCfg({ ...cfg, apiKey: e.target.value })} placeholder="Stored only in this browser" />
               </label>
               <div className="grid2">
-                <label className="field"><span>Model</span><input value={cfg.model} onChange={(e) => setCfg({ ...cfg, model: e.target.value })} /></label>
-                <label className="field"><span>Base URL <em>(optional)</em></span><input value={cfg.baseUrl} onChange={(e) => setCfg({ ...cfg, baseUrl: e.target.value })} placeholder={cfg.provider === 'anthropic' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1'} /></label>
+                <label className="field"><span>Model ID</span><input value={cfg.model} onChange={(e) => setCfg({ ...cfg, model: e.target.value })} placeholder={PRESETS[cfg.provider].modelHint} /></label>
+                <label className="field"><span>Base URL <em>(optional)</em></span><input value={cfg.baseUrl} onChange={(e) => setCfg({ ...cfg, baseUrl: e.target.value })} placeholder={cfg.provider === 'anthropic' ? 'https://api.anthropic.com' : cfg.provider === 'nvidia' ? PRESETS.nvidia.base : 'https://api.openai.com/v1'} /></label>
               </div>
               <p className="muted small">Requests go directly from your browser to this provider; relevant passages from your sources are sent with each request. Every generated claim must cite a passage or it’s discarded, and you’ll fall back to offline mode if a call fails.</p>
-              <Button size="sm" busy={testing} disabled={!isRemote(cfg)} onClick={test}>Test connection</Button>
+              <div className="row"><Button size="sm" busy={testing} disabled={!isRemote(cfg)} onClick={test}>Test connection</Button>{!cfg.model.trim() && <span className="meta">Enter a model ID to continue.</span>}</div>
             </div>
           )}
         </fieldset>
 
         <fieldset className="field">
           <legend>Your data</legend>
-          <p className="muted small">Notebooks, sources and review history live in this browser’s storage. Export a notebook from its card for a backup.</p>
+          <p className="muted small">Notebooks, sources and review history live in this browser’s storage. Use a lesson’s ⋯ menu on the home screen to export a backup.</p>
           <Button variant="danger" size="sm" icon="trash" onClick={async () => {
             if (confirm('Delete ALL notebooks, sources and review history from this browser?')) {
               await Promise.all([db.notebooks, db.sources, db.chunks, db.messages, db.items, db.cards, db.reviews, db.attempts].map((t) => t.clear()))

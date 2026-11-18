@@ -1,6 +1,27 @@
 import type { AiConfig, Chunk } from '../types'
 
+/** Reasoning models stream their chain of thought inline; it must never reach the user or the JSON parser. */
+export function stripThinking(s: string): string {
+  return s.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, '').replace(/^[\s\S]*?<\/think(?:ing)?>/i, '').trim()
+}
+
+export const NVIDIA_BASE = 'https://integrate.api.nvidia.com/v1'
+
 export async function callLLM(cfg: AiConfig, system: string, user: string, maxTokens = 4096, signal?: AbortSignal): Promise<string> {
+  try {
+    return stripThinking(await rawCall(cfg, system, user, maxTokens, signal))
+  } catch (e) {
+    // fetch() rejects with a bare TypeError when the browser blocks a cross-origin call (no CORS headers) or the network is down
+    if (e instanceof TypeError) {
+      throw new Error(
+        `The browser couldn’t reach ${new URL((cfg.baseUrl || (cfg.provider === 'nvidia' ? NVIDIA_BASE : cfg.provider === 'anthropic' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1'))).host}. If you’re online, this provider probably doesn’t allow direct browser calls (CORS) — set Base URL to a small proxy you control (see docs/nvidia-proxy.md).`,
+      )
+    }
+    throw e
+  }
+}
+
+async function rawCall(cfg: AiConfig, system: string, user: string, maxTokens: number, signal?: AbortSignal): Promise<string> {
   if (cfg.provider === 'anthropic') {
     const res = await fetch(`${(cfg.baseUrl || 'https://api.anthropic.com').replace(/\/$/, '')}/v1/messages`, {
       method: 'POST',
@@ -17,7 +38,7 @@ export async function callLLM(cfg: AiConfig, system: string, user: string, maxTo
     const j = await res.json()
     return (j.content ?? []).map((b: any) => b.text ?? '').join('')
   }
-  const res = await fetch(`${(cfg.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '')}/chat/completions`, {
+  const res = await fetch(`${(cfg.baseUrl || (cfg.provider === 'nvidia' ? NVIDIA_BASE : 'https://api.openai.com/v1')).replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     signal,
     headers: { 'content-type': 'application/json', authorization: `Bearer ${cfg.apiKey}` },

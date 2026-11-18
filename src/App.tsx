@@ -17,8 +17,12 @@ export default function App() {
 
   useEffect(() => {
     const root = document.documentElement
-    if (theme === 'system') root.removeAttribute('data-theme')
-    else root.setAttribute('data-theme', theme)
+    const mq = matchMedia('(prefers-color-scheme: dark)')
+    const apply = () => root.setAttribute('data-theme', theme === 'system' ? (mq.matches ? 'dark' : 'light') : theme)
+    apply()
+    if (theme !== 'system') return
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [theme])
 
   useEffect(() => {

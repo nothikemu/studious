@@ -39,7 +39,7 @@ export function Cites({ ids, number, quote }: { ids: string[]; number: (id: stri
           <span key={id} className="cite-wrap">
             <button
               className="cite"
-              onClick={() => openReader(chunk.sourceId, id, quote)}
+              onClick={() => (setTip(null), openReader(chunk.sourceId, id, quote))}
               onMouseEnter={(e) => show(id, e.currentTarget)}
               onMouseLeave={hide}
               onFocus={(e) => show(id, e.currentTarget)}

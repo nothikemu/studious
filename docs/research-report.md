@@ -166,3 +166,7 @@ The Phase 1 specification referenced in the brief did not arrive with the prompt
 - Not built: OCR for scanned PDFs, URL/YouTube/DOCX import, `.apkg` export, cross-device sync, collaboration. Audio, podcast, voice and video are excluded by design.
 - Large-document performance was not stress-tested beyond small PDFs and the sample notebook.
 - Competitor findings in sections 2–5 remain search-snippet level and were not hands-on verified.
+
+## 12. UI revision (requested after the first build)
+
+The interface was reworked to follow the screenshots supplied by the requester (Turbo AI's home and workspace, StudyFetch's tile grid): dark-first theme with purple accents, a "What do you want to learn?" home with an upload/paste prompt and a lessons list, an icon rail, a document pane beside a chat pane with Quizzes/Flashcards quick cards, and colour-coded study-tool tiles. The mascot is an original drawing, not a copy of either product's artwork. Record and YouTube entry points were deliberately not included (audio/video are excluded). A "New folder" control was not built.

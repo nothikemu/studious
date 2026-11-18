@@ -12,17 +12,14 @@ import { Button, Dialog, Icon, ago, type IconName } from './ui'
 const ICON: Record<StudioKind, IconName> = { guide: 'guide', flashcards: 'cards', quiz: 'quiz', mindmap: 'mindmap', deck: 'deck', table: 'table', glossary: 'glossary', notes: 'notes' }
 export const kindIcon = (k: StudioKind) => ICON[k]
 
-export function StudioPane() {
-  const { notebook, sources, items } = useNb()
-  const itemId = useUI((s) => s.studioItemId)
+/** Shared by the Studio view and the chat quick-cards: opens the config dialog, generates, then opens the result. */
+export function useStudioLauncher() {
+  const { notebook } = useNb()
   const openItem = useUI((s) => s.openItem)
   const ai = useUI((s) => s.ai)
   const toast = useUI((s) => s.toast)
   const [config, setConfig] = useState<StudioKind | null>(null)
   const [busy, setBusy] = useState<StudioKind[]>([])
-
-  const item = items.find((i) => i.id === itemId)
-  if (itemId && item) return <Viewer item={item} onRegenerate={() => setConfig(item.kind)} configDialog={config && <ConfigDialog kind={config} onClose={() => setConfig(null)} onGo={(p) => run(config, p)} />} />
 
   async function run(kind: StudioKind, params: GenParams) {
     setConfig(null)
@@ -34,42 +31,58 @@ export function StudioPane() {
     } catch (e) {
       toast((e as Error).message, 'error')
     } finally {
-      setBusy((b) => b.filter((k, i) => i !== b.indexOf(kind)))
+      setBusy((b) => b.filter((_, i) => i !== b.indexOf(kind)))
     }
   }
+  const dialog = config ? <ConfigDialog kind={config} onClose={() => setConfig(null)} onGo={(p) => run(config, p)} /> : null
+  return { busy, launch: (k: StudioKind) => setConfig(k), dialog }
+}
+
+export function StudioPane() {
+  const { sources, items } = useNb()
+  const itemId = useUI((s) => s.studioItemId)
+  const openItem = useUI((s) => s.openItem)
+  const { busy, launch, dialog } = useStudioLauncher()
+
+  const item = items.find((i) => i.id === itemId)
+  if (itemId && item) return <Viewer item={item} onRegenerate={() => launch(item.kind)} configDialog={dialog} />
 
   const usable = sources.some((s) => s.enabled)
   return (
     <div className="pane-body studio">
+      <div className="studio-head">
+        <h2>Study tools</h2>
+        <p className="muted">Build study material from the sources you’ve switched on. Every item keeps its citations and can be edited and exported.</p>
+      </div>
       <div className="mod-grid">
         {STUDIO_ORDER.map((k) => (
-          <button key={k} className="mod" disabled={!usable || busy.includes(k)} onClick={() => setConfig(k)}>
-            <span className="mod-icon">{busy.includes(k) ? <span className="spin" /> : <Icon name={ICON[k]} size={19} />}</span>
+          <button key={k} data-kind={k} className="mod" disabled={!usable || busy.includes(k)} onClick={() => launch(k)}>
+            <span className="mod-icon">{busy.includes(k) ? <span className="spin" /> : <Icon name={ICON[k]} size={20} />}</span>
             <span className="mod-name">{STUDIO_META[k].label}</span>
             <span className="mod-blurb">{busy.includes(k) ? 'Building…' : STUDIO_META[k].blurb}</span>
           </button>
         ))}
       </div>
-      {!usable && <p className="hint">Add and switch on a source to unlock Studio.</p>}
+      {!usable && <p className="hint">Add and switch on a source to unlock study tools.</p>}
 
       <div className="studio-list">
-        <h3 className="section-label">Saved in this notebook</h3>
+        <h3 className="section-label">Saved in this lesson</h3>
         {busy.map((k, i) => (
           <div key={k + i} className="item item-skel" aria-busy="true">
             <span className="item-ic skel" />
             <span className="item-text">
-              <span className="skel skel-line" style={{ width: '55%' }} />
-              <span className="skel skel-line" style={{ width: '35%' }} />
+              <span className="skel skel-line" style={{ width: '40%' }} />
+              <span className="skel skel-line" style={{ width: '25%' }} />
             </span>
           </div>
         ))}
-        {items.length === 0 && busy.length === 0 && <p className="hint">Nothing yet. Pick a module above — each result keeps its citations and can be edited and exported.</p>}
+        {items.length === 0 && busy.length === 0 && <p className="hint">Nothing yet. Pick a tool above.</p>}
         {items
           .slice()
           .sort((a, b) => b.updatedAt - a.updatedAt)
           .map((i) => (
             <button key={i.id} className="item" onClick={() => openItem(i.id)}>
-              <span className="item-ic">
+              <span className="item-ic" data-kind={i.kind}>
                 <Icon name={ICON[i.kind]} size={17} />
               </span>
               <span className="item-text">
@@ -82,7 +95,7 @@ export function StudioPane() {
             </button>
           ))}
       </div>
-      {config && <ConfigDialog kind={config} onClose={() => setConfig(null)} onGo={(p) => run(config, p)} />}
+      {dialog}
     </div>
   )
 }

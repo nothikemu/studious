@@ -27,6 +27,7 @@ export function go(path: string) {
 
 export type Theme = 'system' | 'light' | 'dark'
 export type MobileTab = 'sources' | 'chat' | 'studio'
+export type LeftView = 'sources' | 'studio'
 
 export interface Toast {
   id: number
@@ -42,6 +43,8 @@ interface UI {
   setAi: (c: AiConfig) => void
   mobileTab: MobileTab
   setMobileTab: (t: MobileTab) => void
+  leftView: LeftView
+  setLeftView: (v: LeftView) => void
   reader: { sourceId: string; chunkId?: string; quote?: string; nonce: number } | null
   openReader: (sourceId: string, chunkId?: string, quote?: string) => void
   closeReader: () => void
@@ -51,12 +54,8 @@ interface UI {
   setSearchOpen: (b: boolean) => void
   settingsOpen: boolean
   setSettingsOpen: (b: boolean) => void
-  leftOpen: boolean
   rightOpen: boolean
-  rightWide: boolean
-  toggleLeft: () => void
   toggleRight: () => void
-  setRightWide: (b: boolean) => void
   toasts: Toast[]
   toast: (text: string, tone?: Toast['tone']) => void
   dismissToast: (id: number) => void
@@ -65,9 +64,9 @@ interface UI {
 const savedTheme = (): Theme => {
   try {
     const t = localStorage.getItem('studious.theme')
-    return t === 'light' || t === 'dark' ? t : 'system'
+    return t === 'light' || t === 'system' ? t : 'dark'
   } catch {
-    return 'system'
+    return 'dark'
   }
 }
 
@@ -90,22 +89,20 @@ export const useUI = create<UI>((set, get) => ({
     set({ ai: c })
   },
   mobileTab: 'chat',
-  setMobileTab: (t) => set({ mobileTab: t }),
+  setMobileTab: (t) => set(t === 'chat' ? { mobileTab: t } : { mobileTab: t, leftView: t }),
+  leftView: 'sources',
+  setLeftView: (v) => set({ leftView: v, mobileTab: get().mobileTab === 'chat' ? 'chat' : v }),
   reader: null,
-  openReader: (sourceId, chunkId, quote) => set({ reader: { sourceId, chunkId, quote, nonce: Date.now() }, leftOpen: true, mobileTab: 'sources' }),
+  openReader: (sourceId, chunkId, quote) => set({ reader: { sourceId, chunkId, quote, nonce: Date.now() }, leftView: 'sources', rightOpen: true, mobileTab: 'sources' }),
   closeReader: () => set({ reader: null }),
   studioItemId: null,
-  openItem: (id) => set({ studioItemId: id, rightOpen: true, ...(id ? { mobileTab: 'studio' as const } : {}) }),
+  openItem: (id) => set({ studioItemId: id, ...(id ? { leftView: 'studio' as const, mobileTab: 'studio' as const } : {}) }),
   searchOpen: false,
   setSearchOpen: (b) => set({ searchOpen: b }),
   settingsOpen: false,
   setSettingsOpen: (b) => set({ settingsOpen: b }),
-  leftOpen: true,
   rightOpen: true,
-  rightWide: false,
-  toggleLeft: () => set({ leftOpen: !get().leftOpen }),
   toggleRight: () => set({ rightOpen: !get().rightOpen }),
-  setRightWide: (b) => set({ rightWide: b }),
   toasts: [],
   toast: (text, tone = 'info') => {
     const id = toastId++
@@ -117,6 +114,6 @@ export const useUI = create<UI>((set, get) => ({
 
 if (typeof window !== 'undefined') {
   window.addEventListener('hashchange', () => {
-    useUI.setState({ route: parseHash(location.hash), reader: null, studioItemId: null })
+    useUI.setState({ route: parseHash(location.hash), reader: null, studioItemId: null, leftView: 'sources', mobileTab: 'chat' })
   })
 }

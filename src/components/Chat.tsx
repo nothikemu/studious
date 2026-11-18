@@ -11,7 +11,8 @@ import { saveToNotes } from '../studio/generate'
 import type { ChatMessage } from '../types'
 import { Cites } from './Cite'
 import { useNb } from './nb'
-import { Button, Icon, IconButton } from './ui'
+import { useStudioLauncher } from './Studio'
+import { Button, Icon, IconButton, Mascot } from './ui'
 
 export function ChatPane() {
   const { notebook, sources, chunks, messages, resolver } = useNb()
@@ -22,6 +23,7 @@ export function ChatPane() {
   const [busy, setBusy] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
   const taRef = useRef<HTMLTextAreaElement>(null)
+  const { launch, busy: genBusy, dialog } = useStudioLauncher()
 
   const active = useMemo(() => {
     const on = new Set(sources.filter((s) => s.enabled).map((s) => s.id))
@@ -70,14 +72,22 @@ export function ChatPane() {
       <div className="chat-scroll" role="log" aria-live="polite" aria-label="Conversation">
         {messages.length === 0 && (
           <div className="chat-empty">
-            <div className="chat-empty-mark" aria-hidden="true">
-              <Icon name="chat" size={22} />
+            <div className="quick">
+              <button className="qcard" data-kind="quiz" disabled={!activeSources.length || genBusy.includes('quiz')} onClick={() => launch('quiz')}>
+                <span className="qcard-head"><Icon name="quiz" size={18} /> Quizzes <em className="badge">Popular</em></span>
+                <span className="qcard-sub">Test your knowledge</span>
+              </button>
+              <button className="qcard" data-kind="flashcards" disabled={!activeSources.length || genBusy.includes('flashcards')} onClick={() => launch('flashcards')}>
+                <span className="qcard-head"><Icon name="layers" size={18} /> Flashcards</span>
+                <span className="qcard-sub">Study with active recall</span>
+              </button>
             </div>
-            <h2>Ask your sources</h2>
+            <Mascot size={72} />
+            <h2>Hey, I’m Studious</h2>
             <p>
               {sources.length
-                ? `${activeSources.length} source${activeSources.length === 1 ? '' : 's'} active. Every answer links back to the passage it came from.`
-                : 'Add a source to start. Answers will cite the exact passage they come from.'}
+                ? `I can answer questions about your ${activeSources.length} active source${activeSources.length === 1 ? '' : 's'} — and show you exactly where each answer comes from.`
+                : 'Add a source and I’ll answer from it — with the exact passage cited.'}
             </p>
             <div className="chips">
               {starters.map((s) => (
@@ -141,12 +151,11 @@ export function ChatPane() {
                 Clear
               </Button>
             )}
-            <Button type="submit" variant="primary" size="sm" icon="send" disabled={!text.trim() || busy}>
-              Ask
-            </Button>
+            <Button type="submit" variant="primary" size="sm" icon="send" aria-label="Ask" title="Ask" disabled={!text.trim() || busy} />
           </div>
         </div>
       </form>
+      {dialog}
       <span hidden>{resolver ? '' : ''}</span>
     </div>
   )

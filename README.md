@@ -15,6 +15,18 @@ npm test           # unit + integration tests (vitest, fake-indexeddb)
 npm run build      # typecheck + production build
 ```
 
+## Deploy (GitHub Pages)
+
+```bash
+npm run deploy:pages    # builds and publishes dist/ to the gh-pages branch
+```
+
+Then, once, in the GitHub repo: **Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` / `(root)`**. The site is served at `https://<owner>.github.io/<repo>/`. The app uses hash routing and relative asset URLs, so it works from that sub-path.
+
+## Using NVIDIA NIM (or another model)
+
+Settings → **NVIDIA NIM**: paste your key and the exact model ID from build.nvidia.com (the field is intentionally empty — don't guess). The call goes straight from your browser. If NVIDIA doesn't allow browser calls (CORS), Settings will say so; use the small proxy in [`docs/nvidia-proxy.md`](docs/nvidia-proxy.md) and set it as the Base URL. Your key is stored only in this browser's localStorage.
+
 ## Layout
 
 | Path | What it holds |

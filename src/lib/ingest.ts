@@ -50,22 +50,35 @@ async function extractPdf(buf: ArrayBuffer): Promise<Extracted> {
   for (let p = 1; p <= doc.numPages; p++) {
     const page = await doc.getPage(p)
     const content = await page.getTextContent()
-    let out = ''
-    let lastY: number | null = null
-    let lastH = 10
+    // 1) group items into visual lines by baseline
+    const lines: { y: number; text: string }[] = []
     for (const it of content.items as any[]) {
       if (typeof it.str !== 'string') continue
       const y = it.transform?.[5] as number
-      const h = (it.height as number) || lastH
-      if (lastY !== null && Math.abs(y - lastY) > 1) {
-        const gap = Math.abs(y - lastY)
-        out += gap > h * 1.9 ? '\n\n' : '\n'
-      } else if (out && !out.endsWith(' ') && !out.endsWith('\n') && it.str && !it.str.startsWith(' ')) out += ' '
-      out += it.str
-      if (it.hasEOL && !out.endsWith('\n')) out += '\n'
-      lastY = y
-      lastH = h
+      const last = lines[lines.length - 1]
+      if (last && Math.abs(last.y - y) <= 2) {
+        const glue = last.text && !last.text.endsWith(' ') && it.str && !it.str.startsWith(' ') ? ' ' : ''
+        last.text += glue + it.str
+      } else if (it.str.trim() || last) {
+        lines.push({ y, text: it.str })
+      }
     }
+    const rows = lines.map((l) => ({ y: l.y, text: l.text.replace(/\s+/g, ' ').trim() })).filter((l) => l.text)
+    // 2) a paragraph break is a gap clearly larger than this page's typical line spacing
+    const gaps = rows.slice(1).map((l, k) => Math.abs(rows[k].y - l.y)).filter((g) => g > 0.5).sort((a, b) => a - b)
+    const typical = gaps.length ? gaps[Math.floor((gaps.length - 1) * 0.2)] : 0 // lower quintile: robust to headings/margins skewing the median on short pages
+    let out = ''
+    rows.forEach((l, k) => {
+      if (k > 0) {
+        const gap = Math.abs(rows[k - 1].y - l.y)
+        const endsSentence = /[.!?:”")\]]$/.test(rows[k - 1].text)
+        const bigGap = typical > 0 && gap > typical * 1.6
+        const headingLike = rows[k - 1].text.length < 70 && !endsSentence && !/[,;]$/.test(rows[k - 1].text)
+        const afterHeading = typical > 0 && headingLike && gap > typical * 1.2
+        out += afterHeading || (bigGap && (endsSentence || gap > typical * 2.2)) ? '\n\n' : '\n'
+      }
+      out += l.text
+    })
     out = out.replace(/-\n(?=[a-z])/g, '').replace(/[ \t]+/g, ' ')
     const start = text.length + (text ? 2 : 0)
     text += (text ? '\n\n' : '') + out.trim()

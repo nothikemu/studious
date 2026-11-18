@@ -18,8 +18,6 @@ import { Button, Icon, IconButton, Menu } from './ui'
 export function Viewer({ item, onRegenerate, configDialog }: { item: StudioItem; onRegenerate: () => void; configDialog: ReactNode }) {
   const { notebook, resolver } = useNb()
   const openItem = useUI((s) => s.openItem)
-  const rightWide = useUI((s) => s.rightWide)
-  const setRightWide = useUI((s) => s.setRightWide)
   const toast = useUI((s) => s.toast)
   const [editingTitle, setEditingTitle] = useState(false)
   const name = slug(`${notebook.title}-${item.title}`)
@@ -43,7 +41,7 @@ export function Viewer({ item, onRegenerate, configDialog }: { item: StudioItem;
   return (
     <div className="viewer">
       <div className="viewer-head">
-        <IconButton icon="back" label="Back to Studio" onClick={() => openItem(null)} />
+        <IconButton icon="back" label="Back to study tools" onClick={() => openItem(null)} />
         <div className="viewer-title">
           {editingTitle ? (
             <input
@@ -62,7 +60,6 @@ export function Viewer({ item, onRegenerate, configDialog }: { item: StudioItem;
             {STUDIO_META[item.kind].label} · {item.mode === 'llm' ? 'Written by your model' : 'Built offline'}
           </span>
         </div>
-        <IconButton icon={rightWide ? 'shrink' : 'expand'} label={rightWide ? 'Narrow panel' : 'Widen panel'} className="hide-narrow" onClick={() => setRightWide(!rightWide)} />
         <Menu
           label="Export"
           icon="download"
