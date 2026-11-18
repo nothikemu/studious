@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { isRemote } from '../ai/config'
-import { callLLM } from '../ai/llm'
+import { callLLM, wrongKeyPrefix } from '../ai/llm'
 import { db } from '../db'
 import { useUI } from '../store'
 import type { AiConfig } from '../types'
@@ -73,7 +73,12 @@ export function SettingsDialog() {
             <div className="stack-sm">
               <label className="field">
                 <span>API key</span>
-                <input type="password" autoComplete="off" value={cfg.apiKey} onChange={(e) => setCfg({ ...cfg, apiKey: e.target.value })} placeholder="Stored only in this browser" />
+                <input type="password" autoComplete="off" value={cfg.apiKey} onChange={(e) => setCfg({ ...cfg, apiKey: e.target.value })} placeholder="Stored only in this browser" aria-describedby="key-warn" />
+                {wrongKeyPrefix(cfg) && (
+                  <small id="key-warn" className="warn-text" role="alert">
+                    This doesn’t look like a {PRESETS[cfg.provider].label} key — they start with “{wrongKeyPrefix(cfg)}”. Check you copied the right one.
+                  </small>
+                )}
               </label>
               <div className="grid2">
                 <label className="field"><span>Model ID</span><input value={cfg.model} onChange={(e) => setCfg({ ...cfg, model: e.target.value })} placeholder={PRESETS[cfg.provider].modelHint} /></label>

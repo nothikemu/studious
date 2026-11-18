@@ -281,6 +281,22 @@ describe('reasoning-model output and NVIDIA preset', () => {
     expect(seen.h['X-Title']).toBe('Studious')
     globalThis.fetch = real
   })
+  it('cleans pasted keys and base URLs, and explains a 401 without leaking the key', async () => {
+    const { cleanKey, cleanBase, callLLM } = await import('./ai/llm')
+    expect(cleanKey('  "Bearer sk-or-v1-abc123"\n')).toBe('sk-or-v1-abc123')
+    expect(cleanKey('Authorization: Bearer sk-or-v1-abc')).toBe('sk-or-v1-abc')
+    expect(cleanBase('openrouter.ai/api/v1/chat/completions', 'x')).toBe('https://openrouter.ai/api/v1')
+    expect(cleanBase('http://openrouter.ai/api/v1/', 'x')).toBe('https://openrouter.ai/api/v1')
+    expect(cleanBase('', 'https://d')).toBe('https://d')
+    let auth = ''
+    globalThis.fetch = (async (_u: any, init: any) => { auth = init.headers.authorization; return new Response(JSON.stringify({ error: { message: 'Missing Authentication header' } }), { status: 401 }) }) as any
+    const err = await callLLM({ provider: 'openrouter', apiKey: 'Bearer nvapi-WRONGKEYabcdefghij', model: 'm', baseUrl: '' }, 's', 'u').catch((e) => e as Error)
+    expect(auth).toBe('Bearer nvapi-WRONGKEYabcdefghij') // single Bearer, no duplication
+    expect((err as Error).message).toMatch(/401: Missing Authentication header/)
+    expect((err as Error).message).toMatch(/doesn’t look like a openrouter key.*sk-or-/)
+    expect((err as Error).message).not.toContain('WRONGKEYabcdefghij')
+    globalThis.fetch = real
+  })
   it('handles an unterminated think block and explains CORS failures', async () => {
     const { stripThinking, callLLM } = await import('./ai/llm')
     expect(stripThinking('reasoning without opener</think>Answer [1].')).toBe('Answer [1].')

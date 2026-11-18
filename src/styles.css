@@ -656,3 +656,5 @@ mark.cited { background: color-mix(in srgb, var(--mark) 90%, transparent); color
   .home-main > h1 { margin-bottom: 8px; }
   .prompt-hint { display: none; }
 }
+
+.warn-text { color: var(--gold); font-size: 12.5px; }
