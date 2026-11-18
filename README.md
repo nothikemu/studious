@@ -23,6 +23,10 @@ npm run deploy:pages    # builds and publishes dist/ to the gh-pages branch
 
 Then, once, in the GitHub repo: **Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` / `(root)`**. The site is served at `https://<owner>.github.io/<repo>/`. The app uses hash routing and relative asset URLs, so it works from that sub-path.
 
+## Using OpenRouter (recommended for the hosted site)
+
+Settings → **OpenRouter**: paste your key and a model ID copied from openrouter.ai/models (free models end in `:free`; the field is intentionally empty). OpenRouter allows direct browser calls, so no proxy is needed. Free models can be rate-limited or return malformed JSON — Studious falls back to offline generation with a notice when that happens.
+
 ## Using NVIDIA NIM (or another model)
 
 Settings → **NVIDIA NIM**: paste your key and the exact model ID from build.nvidia.com (the field is intentionally empty — don't guess). The call goes straight from your browser. If NVIDIA doesn't allow browser calls (CORS), Settings will say so; use the small proxy in [`docs/nvidia-proxy.md`](docs/nvidia-proxy.md) and set it as the Base URL. Your key is stored only in this browser's localStorage.

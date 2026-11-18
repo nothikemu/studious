@@ -267,6 +267,20 @@ describe('reasoning-model output and NVIDIA preset', () => {
     expect(seen.b.model).toBe('some/model')
     globalThis.fetch = real
   })
+  it('OpenRouter: right endpoint, bearer key, attribution headers, reasoning stripped', async () => {
+    let seen: any
+    globalThis.fetch = (async (u: any, init: any) => {
+      seen = { u: String(u), h: init.headers }
+      return new Response(JSON.stringify({ choices: [{ message: { content: '<think>x</think>hello' } }] }), { status: 200 })
+    }) as any
+    const { callLLM } = await import('./ai/llm')
+    const out = await callLLM({ provider: 'openrouter', apiKey: 'sk-or-test', model: 'vendor/model:free', baseUrl: '' }, 's', 'u')
+    expect(out).toBe('hello')
+    expect(seen.u).toBe('https://openrouter.ai/api/v1/chat/completions')
+    expect(seen.h.authorization).toBe('Bearer sk-or-test')
+    expect(seen.h['X-Title']).toBe('Studious')
+    globalThis.fetch = real
+  })
   it('handles an unterminated think block and explains CORS failures', async () => {
     const { stripThinking, callLLM } = await import('./ai/llm')
     expect(stripThinking('reasoning without opener</think>Answer [1].')).toBe('Answer [1].')

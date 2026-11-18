@@ -9,6 +9,7 @@ import { Button, Dialog } from './ui'
 const PRESETS: Record<AiConfig['provider'], { model: string; base: string; label: string; modelHint: string }> = {
   offline: { model: '', base: '', label: 'Offline', modelHint: '' },
   anthropic: { model: 'claude-sonnet-5-5', base: '', label: 'Anthropic', modelHint: 'claude-sonnet-5-5' },
+  openrouter: { model: '', base: 'https://openrouter.ai/api/v1', label: 'OpenRouter', modelHint: 'Copy a model ID from openrouter.ai/models (free ones end in :free)' },
   nvidia: { model: '', base: 'https://integrate.api.nvidia.com/v1', label: 'NVIDIA NIM', modelHint: 'Copy the exact model ID from build.nvidia.com (e.g. nvidia/…)' },
   openai: { model: 'gpt-4.1-mini', base: '', label: 'OpenAI-compatible', modelHint: 'gpt-4.1-mini' },
 }
@@ -60,7 +61,7 @@ export function SettingsDialog() {
         <fieldset className="field">
           <legend>AI engine</legend>
           <div className="seg">
-            {(['offline', 'nvidia', 'anthropic', 'openai'] as const).map((p) => (
+            {(['offline', 'openrouter', 'nvidia', 'anthropic', 'openai'] as const).map((p) => (
               <button key={p} className={cfg.provider === p ? 'on' : ''} aria-pressed={cfg.provider === p} onClick={() => setCfg({ ...cfg, provider: p, model: PRESETS[p].model, baseUrl: PRESETS[p].base })}>
                 {PRESETS[p].label}
               </button>
@@ -76,7 +77,7 @@ export function SettingsDialog() {
               </label>
               <div className="grid2">
                 <label className="field"><span>Model ID</span><input value={cfg.model} onChange={(e) => setCfg({ ...cfg, model: e.target.value })} placeholder={PRESETS[cfg.provider].modelHint} /></label>
-                <label className="field"><span>Base URL <em>(optional)</em></span><input value={cfg.baseUrl} onChange={(e) => setCfg({ ...cfg, baseUrl: e.target.value })} placeholder={cfg.provider === 'anthropic' ? 'https://api.anthropic.com' : cfg.provider === 'nvidia' ? PRESETS.nvidia.base : 'https://api.openai.com/v1'} /></label>
+                <label className="field"><span>Base URL <em>(optional)</em></span><input value={cfg.baseUrl} onChange={(e) => setCfg({ ...cfg, baseUrl: e.target.value })} placeholder={cfg.provider === 'anthropic' ? 'https://api.anthropic.com' : cfg.provider === 'nvidia' ? PRESETS.nvidia.base : cfg.provider === 'openrouter' ? PRESETS.openrouter.base : 'https://api.openai.com/v1'} /></label>
               </div>
               <p className="muted small">Requests go directly from your browser to this provider; relevant passages from your sources are sent with each request. Every generated claim must cite a passage or it’s discarded, and you’ll fall back to offline mode if a call fails.</p>
               <div className="row"><Button size="sm" busy={testing} disabled={!isRemote(cfg)} onClick={test}>Test connection</Button>{!cfg.model.trim() && <span className="meta">Enter a model ID to continue.</span>}</div>

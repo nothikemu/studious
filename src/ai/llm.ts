@@ -6,6 +6,10 @@ export function stripThinking(s: string): string {
 }
 
 export const NVIDIA_BASE = 'https://integrate.api.nvidia.com/v1'
+export const OPENROUTER_BASE = 'https://openrouter.ai/api/v1'
+
+const defaultBase = (p: AiConfig['provider']) =>
+  p === 'nvidia' ? NVIDIA_BASE : p === 'openrouter' ? OPENROUTER_BASE : p === 'anthropic' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1'
 
 export async function callLLM(cfg: AiConfig, system: string, user: string, maxTokens = 4096, signal?: AbortSignal): Promise<string> {
   try {
@@ -14,7 +18,7 @@ export async function callLLM(cfg: AiConfig, system: string, user: string, maxTo
     // fetch() rejects with a bare TypeError when the browser blocks a cross-origin call (no CORS headers) or the network is down
     if (e instanceof TypeError) {
       throw new Error(
-        `The browser couldn’t reach ${new URL((cfg.baseUrl || (cfg.provider === 'nvidia' ? NVIDIA_BASE : cfg.provider === 'anthropic' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1'))).host}. If you’re online, this provider probably doesn’t allow direct browser calls (CORS) — set Base URL to a small proxy you control (see docs/nvidia-proxy.md).`,
+        `The browser couldn’t reach ${new URL(cfg.baseUrl || defaultBase(cfg.provider)).host}. If you’re online, this provider probably doesn’t allow direct browser calls (CORS) — set Base URL to a small proxy you control (see docs/nvidia-proxy.md).`,
       )
     }
     throw e
@@ -38,10 +42,15 @@ async function rawCall(cfg: AiConfig, system: string, user: string, maxTokens: n
     const j = await res.json()
     return (j.content ?? []).map((b: any) => b.text ?? '').join('')
   }
-  const res = await fetch(`${(cfg.baseUrl || (cfg.provider === 'nvidia' ? NVIDIA_BASE : 'https://api.openai.com/v1')).replace(/\/$/, '')}/chat/completions`, {
+  const res = await fetch(`${(cfg.baseUrl || defaultBase(cfg.provider)).replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     signal,
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${cfg.apiKey}` },
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${cfg.apiKey}`,
+      // OpenRouter uses these (optional) headers to attribute traffic to the app
+      ...(cfg.provider === 'openrouter' ? { 'X-Title': 'Studious', 'HTTP-Referer': typeof location !== 'undefined' ? location.origin : '' } : {}),
+    },
     body: JSON.stringify({ model: cfg.model, max_tokens: maxTokens, messages: [{ role: 'system', content: system }, { role: 'user', content: user }] }),
   })
   if (!res.ok) throw new Error(await errMsg(res))
