@@ -25,7 +25,7 @@ Then, once, in the GitHub repo: **Settings → Pages → Build and deployment �
 
 ## Using OpenRouter (recommended for the hosted site)
 
-Settings → **OpenRouter**: paste your key and a model ID copied from openrouter.ai/models (free models end in `:free`; the field is intentionally empty). OpenRouter allows direct browser calls, so no proxy is needed. Free models can be rate-limited or return malformed JSON — Studious falls back to offline generation with a notice when that happens.
+Settings → **OpenRouter**: paste your key. The model defaults to `nvidia/nemotron-3-ultra-550b-a55b:free` (Nemotron 3 Ultra, free tier); to use another, copy its ID from openrouter.ai/models (free models end in `:free`). Free models are limited to roughly 20 requests/minute and 50/day until the account has bought credits, and each chat answer or study-tool build is one request. OpenRouter allows direct browser calls, so no proxy is needed. Free models can be rate-limited or return malformed JSON — Studious falls back to offline generation with a notice when that happens.
 
 ## Using NVIDIA NIM (or another model)
 

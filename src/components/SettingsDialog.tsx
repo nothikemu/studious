@@ -9,7 +9,7 @@ import { Button, Dialog } from './ui'
 const PRESETS: Record<AiConfig['provider'], { model: string; base: string; label: string; modelHint: string }> = {
   offline: { model: '', base: '', label: 'Offline', modelHint: '' },
   anthropic: { model: 'claude-sonnet-5-5', base: '', label: 'Anthropic', modelHint: 'claude-sonnet-5-5' },
-  openrouter: { model: '', base: 'https://openrouter.ai/api/v1', label: 'OpenRouter', modelHint: 'Copy a model ID from openrouter.ai/models (free ones end in :free)' },
+  openrouter: { model: 'nvidia/nemotron-3-ultra-550b-a55b:free', base: 'https://openrouter.ai/api/v1', label: 'OpenRouter', modelHint: 'Copy a model ID from openrouter.ai/models (free ones end in :free)' },
   nvidia: { model: '', base: 'https://integrate.api.nvidia.com/v1', label: 'NVIDIA NIM', modelHint: 'Copy the exact model ID from build.nvidia.com (e.g. nvidia/…)' },
   openai: { model: 'gpt-4.1-mini', base: '', label: 'OpenAI-compatible', modelHint: 'gpt-4.1-mini' },
 }
